@@ -299,7 +299,33 @@ void WQConnector::processFutClientLimitsUpdate(QVariantMap &msg)
 void WQConnector::processCashLimitsUpdate(QVariantMap &msg)
 {
     qDebug() << "processCashLimitsUpdate";
-    printToLog(msg.keys().join("\n"));
+    QString ucode, firmid;
+    if(msg.contains("ucode"))
+        ucode = msg.value("ucode").toString();
+    else
+    {
+        qDebug() << "No ucode";
+        return;
+    }
+    if(msg.contains("firmid"))
+        firmid = msg.value("firmid").toString();
+    else
+    {
+        qDebug() << "No firmid";
+        return;
+    }
+    ClientCode *cc;
+    bool exists=false;
+    if(clientCodes.contains(ucode))
+    {
+        cc = clientCodes.value(ucode);
+        exists=true;
+    }
+    else
+        cc = new ClientCode;
+    if(!cc->initFromFirmId(ucode, firmid, tradeAccounts.values()))
+        qDebug() << "Couldn't find corresponding trade account!";
+    clientCodes.insert(ucode, cc);
 }
 
 void WQConnector::processParamsUpdate(QVariantMap &msg)
@@ -662,4 +688,18 @@ bool TradeAccountInfo::initFrom(const QVariantMap &vmap)
         }
     }
     return true;
+}
+
+bool ClientCode::initFromFirmId(QString userCode, QString firmId, const QList<TradeAccountInfo *> &allAccs)
+{
+    int i;
+    ucode=userCode;
+    for(i=0;i<allAccs.count();i++)
+    {
+        if(allAccs.at(i)->firmid==firmId)
+            accounts.append(allAccs.at(i));
+    }
+    if(accounts.count())
+        return true;
+    return false;
 }

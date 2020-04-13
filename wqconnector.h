@@ -6,6 +6,8 @@
 #include <QJsonDocument>
 #include <QVariantMap>
 
+#define C_S_DELIM   U"\u00A6"
+
 enum WQ_CLASS_TYPES
 {
     UNKNOWN_CLASS = 0,
@@ -126,6 +128,30 @@ struct TradeAccountInfo
     bool initFrom(const QVariantMap &vmap);
 };
 
+struct ClientCode
+{
+    QString ucode;
+    QList<TradeAccountInfo *> accounts;
+    bool initFromFirmId(QString userCode, QString firmId, const QList<TradeAccountInfo *> &allAccs);
+};
+
+struct CashLimit
+{
+    QString ucode;      //"ucode":"2051",
+    QString curCode;    //"valut":"SUR",
+    QString tag;        //"tag":"EQTV",
+    QString firmid;     //"firmid":"NC0011100000",
+    int mId;            //market ID? "mid":14421,
+    double currPosition;//"cbal":300000,
+    double currLimit;   //"clim":0,
+    double incPosition; //"obal":300000,
+    double incLimit;    //"olim":0,
+    int qtyScale;       //"qty_scale":2
+    double reserved;    //"block":0,
+    int limitKind;      //"limit_kind":0,
+    int status;         //"status":1,
+};
+
 class WQConnector : public QObject
 {
     Q_OBJECT
@@ -162,6 +188,7 @@ private:
     QMap<QString, SecClassSpec *> classList;
     QStringList fxClassesKeys;
     QMap<QString, TradeAccountInfo*> tradeAccounts;
+    QMap<QString, ClientCode*> clientCodes;
 
     void processArrivedJson(QJsonDocument &jsonDoc);
     //incomming messages
